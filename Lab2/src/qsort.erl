@@ -26,7 +26,7 @@ randomElems(N, Min, Max) ->
   [(X + rand:uniform(Range)) rem Range + Min || X <- lists:seq(1, N)].
 
 compareSpeeds(List, Func1, Func2) ->
-  Time1 = element(1, timer:tc(?MODULE, Func1, List)),
-  Time2 = element(1, timer:tc(?MODULE, Func2, List)),
-  %io:format("Time of first function: ~B~nTime of second function: ~B~n", Time1, Time2).
-  {Time1, Time2}.
+  Time1 = element(1, timer:tc(Func1, [List])),
+  Time2 = element(1, timer:tc(Func2, [List])),
+  io:format("Time of first function: ~B~nTime of second function: ~B~n", [Time1, Time2]).
+  %calling the function: "qsort:compareSpeeds(List, fun qsort:qs/1, fun lists:sort/1).
