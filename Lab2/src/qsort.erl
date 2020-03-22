@@ -23,7 +23,7 @@ qs([Pivot | Tail]) -> qs( lessThan(Tail, Pivot) ) ++ [Pivot] ++ qs( grtEqThan(Ta
 
 randomElems(N, Min, Max) ->
   Range = Max - Min + 1,
-  [rand:uniform(Range) rem Range + Min || lists:seq(1, N)].
+  [(X + rand:uniform(Range)) rem Range + Min || X <- lists:seq(1, N)].
 
 compareSpeeds(List, Func1, Func2) ->
   Time1 = element(1, timer:tc(?MODULE, Func1, List)),
