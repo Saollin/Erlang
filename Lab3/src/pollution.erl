@@ -11,7 +11,7 @@
 
 %% API
 -export([createMonitor/0, addStation/3, addValue/5, removeValue/4, getOneValue/4, getStationMean/3, getDailyMean/3]).
-
+-export([getHourlyMean/4]).
 %% tworzy nowy monitor
 createMonitor() ->
   #{}.
@@ -93,13 +93,14 @@ getOneValue(Name, Date, Type, Monitor) ->
       FiltredValue
   end.
 
-%% zwraca średnią wartość pomiarów danego typu dla podanej stacji
+%% zwraca średnią wartość pomiarów danego typu dla podanej stacji, informuje gdy nie ma stacji o danej nazwie,
+%% zwraca też 0 przy braku pasujących wartości
 getStationMean(Name, Type, Monitor) ->
   Keys = maps:keys(Monitor),
   FiltredList = lists:filter(fun(X) -> lists:member(Name, X) end, Keys),
   StationExist = [] =/= FiltredList,
   case StationExist of
-    false -> io:format("Station with such name or coordinates doesn't exist~n"), {};
+    false -> io:format("Station with such name or coordinates doesn't exist~n"), 0;
     true -> [Key] = FiltredList,
       Mensurations = maps:get(Key, Monitor),
       FiltredValues = lists:filter(fun(X) -> lists:member(Type, tuple_to_list(X)) end, Mensurations),
@@ -114,7 +115,7 @@ meanOfValues(List) ->
 %% funkcja wyliczająca średnią wartość zawartą w liście
 mean(L) ->
   case length(L) of
-    0 -> throw("There is no such mensurations! It's impossible to count mean!");
+    0 -> io:format("There is no such mensurations! It's impossible to count mean!"), 0;
     _ -> lists:sum(L) / length(L)
   end.
 
@@ -126,4 +127,18 @@ getDailyMean(Date, Type, Monitor) ->
   RightValues = lists:filter(fun(X) -> checkParameters(DateOnlyWithHour, Type, X) end, FlattenValues),
   meanOfValues(RightValues).
 
+getHourlyMean(Name, Hour, Type, Monitor) ->
+  Keys = maps:keys(Monitor),
+  FiltredList = lists:filter(fun(X) -> lists:member(Name, X) end, Keys),
+  StationExist = [] =/= FiltredList,
+  case StationExist of
+    false -> io:format("Station with such name or coordinates doesn't exist~n"), 0;
+    true -> [Key] = FiltredList,
+      Mensurations = maps:get(Key, Monitor),
+      FiltredValues = lists:filter(fun(X) -> checkHourOfDay(Hour, Type, X) end, Mensurations),
+      meanOfValues(FiltredValues)
+  end.
 
+checkHourOfDay(CheckHour, CheckType, Data) ->
+  {{_, Hour}, Type, _} = Data,
+  Hour =:= CheckHour andalso CheckType =:= Type.
