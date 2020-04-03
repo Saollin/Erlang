@@ -59,7 +59,6 @@ convertDate(Date) ->
       {Day, Hour}
   end.
 
-
 %% sprawdza czy istnieje już pomiar o danej godzinie i typie
 checkParameters(Date, Type, Tuple) ->
   List = tuple_to_list(Tuple),
@@ -80,6 +79,7 @@ removeValue(Name, Date, Type, Monitor) ->
       Monitor#{Key := FiltredValues}
   end.
 
+%% zwraca wartość pomiaru konkretnego typu, dla podanej stacji i daty (z godziną)
 getOneValue(Name, Date, Type, Monitor) ->
   Keys = maps:keys(Monitor),
   FiltredList = lists:filter(fun(X) -> lists:member(Name, X) end, Keys),
@@ -93,13 +93,27 @@ getOneValue(Name, Date, Type, Monitor) ->
       FiltredValue
   end.
 
-getDailyMean(_Arg0, _Arg1, _Arg2) ->
-  erlang:error(not_implemented).
 
-getStationMean(_Arg0, _Arg1, _Arg2) ->
-  erlang:error(not_implemented).
+getStationMean(Name, Type, Monitor) ->
+  Keys = maps:keys(Monitor),
+  FiltredList = lists:filter(fun(X) -> lists:member(Name, X) end, Keys),
+  StationExist = [] =/= FiltredList,
+  case StationExist of
+    false -> io:format("Station with such name or coordinates doesn't exist~n"), {};
+    true -> [Key] = FiltredList,
+      Mensurations = maps:get(Key, Monitor),
+      FiltredValues = lists:filter(fun(X) -> lists:member(Type, tuple_to_list(X)) end, Mensurations),
+      meanOfValues(FiltredValues)
+  end.
 
+meanOfValues(List) ->
+  ResultList = lists:flatmap(fun ({_,_, X}) -> [X] end, List),
+  mean(ResultList).
 
-
+mean(L) ->
+  case length(L) of
+    0 -> throw("There is no such mensurations! It's impossible to count mean!");
+    _ -> lists:sum(L) / length(L)
+  end.
 
 
