@@ -42,7 +42,7 @@ addValue(Name, Date, Type, Value, Monitor) ->
     true -> [Key] = FiltredList,
       DateOnlyWithHour = convertDate(Date),
       Mensurations = maps:get(Key, Monitor),
-      MensurationExist = lists:any(fun(X) -> parameterChecker(DateOnlyWithHour, Type, X) end, Mensurations),
+      MensurationExist = lists:any(fun(X) -> checkParameters(DateOnlyWithHour, Type, X) end, Mensurations),
       case MensurationExist of
         true -> io:format("Such mensuration exist~n"), Monitor;
         false -> Monitor#{Key := [{DateOnlyWithHour, Type, Value}] ++ Mensurations}
