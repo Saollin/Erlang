@@ -4,3 +4,4 @@ out/
 *.o
 *.beam
 *.plt
+NoCode/
