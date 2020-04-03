@@ -80,6 +80,19 @@ removeValue(Name, Date, Type, Monitor) ->
       Monitor#{Key := FiltredValues}
   end.
 
+getOneValue(Name, Date, Type, Monitor) ->
+  Keys = maps:keys(Monitor),
+  FiltredList = lists:filter(fun(X) -> lists:member(Name, X) end, Keys),
+  StationExist = [] =/= FiltredList,
+  case StationExist of
+    false -> io:format("Station with such name or coordinates doesn't exist~n"), {};
+    true -> [Key] = FiltredList,
+      DateOnlyWithHour = convertDate(Date),
+      Mensurations = maps:get(Key, Monitor),
+      [{_, _,FiltredValue}] = lists:filter(fun(X) -> checkParameters(DateOnlyWithHour, Type, X) end, Mensurations),
+      FiltredValue
+  end.
+
 getDailyMean(_Arg0, _Arg1, _Arg2) ->
   erlang:error(not_implemented).
 
@@ -89,6 +102,4 @@ getStationMean(_Arg0, _Arg1, _Arg2) ->
 
 
 
-getOneValue(_Arg0, _Arg1, _Arg2, _Arg3) ->
-  erlang:error(not_implemented).
 
