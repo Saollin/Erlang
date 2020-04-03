@@ -10,7 +10,7 @@
 -author("grzegorz").
 
 %% API
--export([createMonitor/0, addStation/3, addValue/5, removeValue/5, getOneValue/4, getStationMean/3, getDailyMean/3]).
+-export([createMonitor/0, addStation/3, addValue/5, removeValue/4, getOneValue/4, getStationMean/3, getDailyMean/3]).
 
 %% tworzy nowy monitor
 createMonitor() ->
@@ -20,7 +20,7 @@ createMonitor() ->
 %% współrzędnymi wyświetla komunikat i zwraca poprzedni monitor
 addStation(Name, Coord, Monitor) ->
   Keys = maps:keys(Monitor),
-  FiltredList = lists:filter(fun(X) -> stationFilter(Name, Coord, X) end, Keys),
+  FiltredList = lists:filter(fun(X) -> checkStation(Name, Coord, X) end, Keys),
   IsStation = [] =/= FiltredList,
   case IsStation of
     true -> io:format("Station with such name or coordinates exists~n"), Monitor;
@@ -28,7 +28,7 @@ addStation(Name, Coord, Monitor) ->
   end.
 
 %% sprawdza podana nazwa lub współrzędne już istnieją dla danego monitoru
-stationFilter(Name, Coord, List) ->
+checkStation(Name, Coord, List) ->
   lists:member(Name, List) orelse lists:member(Coord, List).
 
 %% dodaje wartość do danej stacji, uniemożliwia dodanie do nieistniejącej stacji (sprawdza czy taka istnieje)
@@ -65,10 +65,20 @@ checkParameters(Date, Type, Tuple) ->
   List = tuple_to_list(Tuple),
   lists:member(Date, List) andalso lists:member(Type, List).
 
-%%
-removeValue(_Arg0, _Arg1, _Arg2, _Arg3, _Arg4) ->
-  erlang:error(not_implemented).
-
+%% usuwa odczyt z danej stacji. Gdy stacja nie instnieje informuje o tym, gdy brak odczytu o takich parametrach nie informuje
+%% w obu powyższych przypadkach zwraca niezmodyfikowany Monitor
+removeValue(Name, Date, Type, Monitor) ->
+  Keys = maps:keys(Monitor),
+  FiltredList = lists:filter(fun(X) -> lists:member(Name, X) end, Keys),
+  StationExist = [] =/= FiltredList,
+  case StationExist of
+    false -> io:format("Station with such name or coordinates doesn't exist~n"), Monitor;
+    true -> [Key] = FiltredList,
+      DateOnlyWithHour = convertDate(Date),
+      Mensurations = maps:get(Key, Monitor),
+      FiltredValues = lists:filter(fun(X) -> not (checkParameters(DateOnlyWithHour, Type, X)) end, Mensurations),
+      Monitor#{Key := FiltredValues}
+  end.
 
 getDailyMean(_Arg0, _Arg1, _Arg2) ->
   erlang:error(not_implemented).
