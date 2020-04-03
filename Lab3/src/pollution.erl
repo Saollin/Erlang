@@ -40,8 +40,7 @@ addValue(Name, Date, Type, Value, Monitor) ->
   case StationExist of
     false -> io:format("Station with such name or coordinates doesn't exist~n"), Monitor;
     true -> [Key] = FiltredList,
-      {Day, {Hour, _, _}} = Date,
-      DateOnlyWithHour = {Day, Hour},
+      DateOnlyWithHour = convertDate(Date),
       Mensurations = maps:get(Key, Monitor),
       MensurationExist = lists:any(fun(X) -> parameterChecker(DateOnlyWithHour, Type, X) end, Mensurations),
       case MensurationExist of
@@ -50,8 +49,19 @@ addValue(Name, Date, Type, Value, Monitor) ->
       end
   end.
 
+%%zwraca Date bez minut i sekund (tylko z godziną), jeśli Data jest już w takiej formie nic nie zmienia
+convertDate(Date) ->
+  {Day, Time} = Date,
+  IsTuple = is_tuple(Time),
+  case IsTuple of
+    false -> Date;
+    true -> {Hour, _, _ } = Time,
+      {Day, Hour}
+  end.
+
+
 %% sprawdza czy istnieje już pomiar o danej godzinie i typie
-parameterChecker(Date, Type, Tuple) ->
+checkParameters(Date, Type, Tuple) ->
   List = tuple_to_list(Tuple),
   lists:member(Date, List) andalso lists:member(Type, List).
 
