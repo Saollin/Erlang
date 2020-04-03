@@ -116,4 +116,9 @@ mean(L) ->
     _ -> lists:sum(L) / length(L)
   end.
 
-
+getDailyMean(Date, Type, Monitor) ->
+  DateOnlyWithHour = convertDate(Date),
+  Values = maps:values(Monitor),
+  FlattenValues = lists:flatten(Values),
+  RightValues = lists:filter(fun(X) -> checkParameters(DateOnlyWithHour, Type, X) end, FlattenValues),
+  meanOfValues(RightValues).
