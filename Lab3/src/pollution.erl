@@ -43,12 +43,17 @@ addValue(Name, Date, Type, Value, Monitor) ->
       {Day, {Hour, _, _}} = Date,
       DateOnlyWithHour = {Day, Hour},
       Mensurations = maps:get(Key, Monitor),
-      MensurationExist = lists:member({DateOnlyWithHour, Type, Value}, Mensurations),
+      MensurationExist = lists:any(fun(X) -> parameterChecker(DateOnlyWithHour, Type, X) end, Mensurations),
       case MensurationExist of
         true -> io:format("Such mensuration exist~n"), Monitor;
         false -> Monitor#{Key := [{DateOnlyWithHour, Type, Value}] ++ Mensurations}
       end
   end.
+
+%% sprawdza czy istnieje już pomiar o danej godzinie i typie
+parameterChecker(Date, Type, Tuple) ->
+  List = tuple_to_list(Tuple),
+  lists:member(Date, List) andalso lists:member(Type, List).
 
 %%
 removeValue(_Arg0, _Arg1, _Arg2, _Arg3, _Arg4) ->
