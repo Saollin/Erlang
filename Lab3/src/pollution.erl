@@ -93,7 +93,7 @@ getOneValue(Name, Date, Type, Monitor) ->
       FiltredValue
   end.
 
-
+%% zwraca średnią wartość pomiarów danego typu dla podanej stacji
 getStationMean(Name, Type, Monitor) ->
   Keys = maps:keys(Monitor),
   FiltredList = lists:filter(fun(X) -> lists:member(Name, X) end, Keys),
@@ -106,19 +106,24 @@ getStationMean(Name, Type, Monitor) ->
       meanOfValues(FiltredValues)
   end.
 
+%% pomocnicza funkcja wyciągąca z listy pomiarów tylko wartość i licząca średnią wartość
 meanOfValues(List) ->
   ResultList = lists:flatmap(fun ({_,_, X}) -> [X] end, List),
   mean(ResultList).
 
+%% funkcja wyliczająca średnią wartość zawartą w liście
 mean(L) ->
   case length(L) of
     0 -> throw("There is no such mensurations! It's impossible to count mean!");
     _ -> lists:sum(L) / length(L)
   end.
 
+%% funkcja wyliczająca średnią wartość pomiarów danego typu dla wszystkich stacji
 getDailyMean(Date, Type, Monitor) ->
   DateOnlyWithHour = convertDate(Date),
   Values = maps:values(Monitor),
   FlattenValues = lists:flatten(Values),
   RightValues = lists:filter(fun(X) -> checkParameters(DateOnlyWithHour, Type, X) end, FlattenValues),
   meanOfValues(RightValues).
+
+
