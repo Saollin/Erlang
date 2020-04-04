@@ -144,35 +144,30 @@ checkHourOfDay(CheckHour, CheckType, Data) ->
   Hour =:= CheckHour andalso CheckType =:= Type.
 
 getMaximumGradientStations(Monitor) ->
-  getMaxGradient(Monitor, getUniqueTypes(Monitor), {0,{-1,-1},{-1,-1}}).
+  countMaxGradient(Monitor, getUniqueTypes(Monitor), {0,{-1,-1},{-1,-1}}).
 
 getUniqueTypes(Monitor) ->
   sets:to_list(sets:from_list([element(2,X) || X <- lists:flatten(maps:values(Monitor))])).
 
-getMaxGradient(_, [], Max) ->
+countMaxGradient(_, [], Max) ->
   case Max of
-    {0,{-1,-1},{-1,-1}} ->
-      throw("There is no sufficient number of mensurations.");
+    {0,{-1,-1},{-1,-1}} -> throw("There is no sufficient number of mensurations.");
     _ -> Max
   end;
-getMaxGradient(Monitor, [OneType|Tail], Max) ->
+countMaxGradient(Monitor, [OneType|Tail], Max) ->
 %%  BondedData = [{[Name, Coord], {Date, Type, Value}}, {[Name2, Coord2], {Date2, Type2, Value2}}, ...]
   BondedData = [{X, Y} || X <- maps:keys(Monitor), Y <- maps:get(X, Monitor)],
 %%  DataWithCoords = [{Coords, Date, Type, Value}, ...]
-  io:format("~w~n", [BondedData]),
   DataWithCoords = [{Coord, Date, Type, Value} || {[_, Coord], {Date, Type, Value}} <- BondedData],
-  getMaxGradient(Monitor, Tail,
-    getMaxValueForType(lists:filter(fun(X) -> OneType =:= element(3, X) end, DataWithCoords), Max)).
+  MaxValueForType = countOneValue(DataWithCoords, OneType, Max),
+  countMaxGradient(Monitor, Tail, MaxValueForType).
 
-getMaxValueForType(DataOfType, Max) ->
-  getOneMaxValue([gradient( element(4,X), element(4,Y), element(1,X), element(1,Y)) ||
-    X<-DataOfType, Y<-DataOfType,
-    element(1,X) =/= element(1,Y)], Max).
-
-getOneMaxValue([], Max) -> Max;
-getOneMaxValue([Head|Tail], Max) ->
-  New = lists:foldl(fun({W, Coord1, Coord2}, Acc) -> max({W, Coord1, Coord2}, Acc) end, Head, Tail),
-  if New > Max -> New;
+countOneValue(DataWithCoords, Type, Max) ->
+  DataOfType = lists:filter(fun(X) -> Type =:= element(3, X) end, DataWithCoords),
+  GradientValue = [gradient( element(4,X), element(4,Y), element(1,X), element(1,Y)) ||
+    X<-DataOfType, Y<-DataOfType, element(1,X) =/= element(1,Y)],
+  NewMax = lists:foldl(fun({W, Coord1, Coord2}, Acc) -> max({W, Coord1, Coord2}, Acc) end, {}, GradientValue),
+  if NewMax > Max -> NewMax;
     true -> Max
   end.
 
