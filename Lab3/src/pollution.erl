@@ -11,7 +11,7 @@
 
 %% API
 -export([createMonitor/0, addStation/3, addValue/5, removeValue/4, getOneValue/4, getStationMean/3, getDailyMean/3]).
--export([getHourlyMean/4, getMaximumGradientStations/1, getDailyAverageDataCount/1]).
+-export([getHourlyMean/4, getMaximumGradientStations/1, getDailyAverageDataCount/1, getDailyOverLimit/3]).
 %% tworzy nowy monitor
 createMonitor() ->
   #{}.
@@ -146,9 +146,9 @@ checkHourOfDay(CheckHour, CheckType, Data) ->
   {{_, Hour}, Type, _} = Data,
   Hour =:= CheckHour andalso CheckType =:= Type.
 
-%% funkcja oblicza średnią ilość pomiarów dziennie
+%% funkcja oblicza średnią ilość pomiarów dziennie przypadającą na jedną stację
 getDailyAverageDataCount(Monitor) ->
-%%  StationsAndMensurations = [{{Name, Coord}, NumberOfMensurations}, ...]
+%%  StationsAndMensurations = [{{Name, Coord}, NumberOfMensurations / number of days}, ...]
   StationsAndMensurations = [{X, Y / Z} || X <- maps:keys(Monitor), %% X - station name
     Y <- [length(maps:get(X, Monitor))], % Y - Number of Mensurations
     Z <- [length(getUniqueDays(maps:get(X, Monitor)))]], % Z - number of days
@@ -204,3 +204,13 @@ absolute(X) ->
   if X >= 0 -> X;
     true -> (-X)
   end.
+
+getDailyOverLimit(Monitor, Date, Limit) ->
+  %%  StationsAndMensurations = [{{Name, Coord}, NumberOfMensurations / number of days}, ...]
+  StationsAndMensurations = [{X, Y} || X <- maps:keys(Monitor), %% X - station name
+    Y <- maps:get(X, Monitor),
+    Date == element(1, element(1, Y)),
+    Limit < element(3, Y)],
+  length(StationsAndMensurations).
+
+
