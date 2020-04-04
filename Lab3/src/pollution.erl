@@ -11,7 +11,7 @@
 
 %% API
 -export([createMonitor/0, addStation/3, addValue/5, removeValue/4, getOneValue/4, getStationMean/3, getDailyMean/3]).
--export([getHourlyMean/4]).
+-export([getHourlyMean/4, getMaximumGradientStations/1]).
 %% tworzy nowy monitor
 createMonitor() ->
   #{}.
@@ -142,3 +142,47 @@ getHourlyMean(Name, Hour, Type, Monitor) ->
 checkHourOfDay(CheckHour, CheckType, Data) ->
   {{_, Hour}, Type, _} = Data,
   Hour =:= CheckHour andalso CheckType =:= Type.
+
+getMaximumGradientStations(Monitor) ->
+  getMaxGradient(Monitor, getUniqueTypes(Monitor), {0,{-1,-1},{-1,-1}}).
+
+getUniqueTypes(Monitor) ->
+  sets:to_list(sets:from_list([element(2,X) || X <- lists:flatten(maps:values(Monitor))])).
+
+getMaxGradient(_, [], Max) ->
+  case Max of
+    {0,{-1,-1},{-1,-1}} ->
+      throw("There is no sufficient number of mensurations.");
+    _ -> Max
+  end;
+getMaxGradient(Monitor, [OneType|Tail], Max) ->
+%%  BondedData = [{[Name, Coord], {Date, Type, Value}}, {[Name2, Coord2], {Date2, Type2, Value2}}, ...]
+  BondedData = [{X, Y} || X <- maps:keys(Monitor), Y <- maps:get(X, Monitor)],
+%%  DataWithCoords = [{Coords, Date, Type, Value}, ...]
+  io:format("~w~n", [BondedData]),
+  DataWithCoords = [{Coord, Date, Type, Value} || {[_, Coord], {Date, Type, Value}} <- BondedData],
+  getMaxGradient(Monitor, Tail,
+    getMaxValueForType(lists:filter(fun(X) -> OneType =:= element(3, X) end, DataWithCoords), Max)).
+
+getMaxValueForType(DataOfType, Max) ->
+  getOneMaxValue([gradient( element(4,X), element(4,Y), element(1,X), element(1,Y)) ||
+    X<-DataOfType, Y<-DataOfType,
+    element(1,X) =/= element(1,Y)], Max).
+
+getOneMaxValue([], Max) -> Max;
+getOneMaxValue([Head|Tail], Max) ->
+  New = lists:foldl(fun({W, Coord1, Coord2}, Acc) -> max({W, Coord1, Coord2}, Acc) end, Head, Tail),
+  if New > Max -> New;
+    true -> Max
+  end.
+
+gradient(Value1, Value2, Coord1, Coord2) ->
+  { (absolute(Value2 - Value1) / distance(Coord1, Coord2)) , Coord1, Coord2 }.
+
+distance({X1, Y1}, {X2, Y2}) ->
+  math:sqrt(math:pow(X2 - X1, 2) + math:pow(Y2 - Y1, 2)).
+
+absolute(X) ->
+  if X >= 0 -> X;
+    true -> (-X)
+  end.
