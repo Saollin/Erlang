@@ -127,6 +127,7 @@ getDailyMean(Date, Type, Monitor) ->
   RightValues = lists:filter(fun(X) -> checkParameters(DateOnlyWithHour, Type, X) end, FlattenValues),
   meanOfValues(RightValues).
 
+%% funkcja wylicza średnią wartość pomiaru danego typu każdego dnia o podanej godzinie na danej stacji
 getHourlyMean(Name, Hour, Type, Monitor) ->
   Keys = maps:keys(Monitor),
   FiltredList = lists:filter(fun(X) -> lists:member(Name, X) end, Keys),
@@ -135,20 +136,26 @@ getHourlyMean(Name, Hour, Type, Monitor) ->
     false -> io:format("Station with such name or coordinates doesn't exist~n"), 0;
     true -> [Key] = FiltredList,
       Mensurations = maps:get(Key, Monitor),
+%%    zostawiamy tylko dane o podanym typie i godzinie
       FiltredValues = lists:filter(fun(X) -> checkHourOfDay(Hour, Type, X) end, Mensurations),
       meanOfValues(FiltredValues)
   end.
 
+%% funkcja pobiera godzine i typ z tupli z danymi i zwraca true jesli obie zgadzają się z podanym parametrem
 checkHourOfDay(CheckHour, CheckType, Data) ->
   {{_, Hour}, Type, _} = Data,
   Hour =:= CheckHour andalso CheckType =:= Type.
 
+%% funkcja wylicza maksymalny gradient ze względu na odlegość dla podanego monitoru,
+%% używa do tego funkcji countMaxGradient - jako Max używa tupli {0,{-1,-1},{-1,-1}}
 getMaximumGradientStations(Monitor) ->
   countMaxGradient(Monitor, getUniqueTypes(Monitor), {0,{-1,-1},{-1,-1}}).
 
+%% pomocnicza funcja zwraca set wszystkich zmierzonych typów pomiarów w postaci listy
 getUniqueTypes(Monitor) ->
   sets:to_list(sets:from_list([element(2,X) || X <- lists:flatten(maps:values(Monitor))])).
 
+%% właściwa funkcja wyliczająca maksymalny gradient, gdy brakuje wystarczającej ilości pomiarów, rzuca wyjątek
 countMaxGradient(_, [], Max) ->
   case Max of
     {0,{-1,-1},{-1,-1}} -> throw("There is no sufficient number of mensurations.");
@@ -162,6 +169,7 @@ countMaxGradient(Monitor, [OneType|Tail], Max) ->
   MaxValueForType = countOneValue(DataWithCoords, OneType, Max),
   countMaxGradient(Monitor, Tail, MaxValueForType).
 
+%% wylicza największy gradient dla podanego typu między wszystkimi stacjami pomiarowymi
 countOneValue(DataWithCoords, Type, Max) ->
   DataOfType = lists:filter(fun(X) -> Type =:= element(3, X) end, DataWithCoords),
   GradientValue = [gradient( element(4,X), element(4,Y), element(1,X), element(1,Y)) ||
@@ -171,12 +179,15 @@ countOneValue(DataWithCoords, Type, Max) ->
     true -> Max
   end.
 
+%% wylicza gradient dla dwóch wartości z dwóch stacji
 gradient(Value1, Value2, Coord1, Coord2) ->
   { (absolute(Value2 - Value1) / distance(Coord1, Coord2)) , Coord1, Coord2 }.
 
+%% wylicza dystans między dwiema stacjami
 distance({X1, Y1}, {X2, Y2}) ->
   math:sqrt(math:pow(X2 - X1, 2) + math:pow(Y2 - Y1, 2)).
 
+%% wartość absolutna
 absolute(X) ->
   if X >= 0 -> X;
     true -> (-X)
