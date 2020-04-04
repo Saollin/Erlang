@@ -11,7 +11,9 @@
 
 %% API
 -export([createMonitor/0, addStation/3, addValue/5, removeValue/4, getOneValue/4, getStationMean/3, getDailyMean/3]).
--export([getHourlyMean/4, getMaximumGradientStations/1, getDailyAverageDataCount/1, getDailyOverLimit/3]).
+-export([getHourlyMean/4, getMaximumGradientStations/1, getDailyAverageDataCount/1, getDailyOverLimit/4]).
+-export([getDailyAverageMensurationOfStation/2, getDailyUnderLimit/4]).
+
 %% tworzy nowy monitor
 createMonitor() ->
   #{}.
@@ -205,12 +207,39 @@ absolute(X) ->
     true -> (-X)
   end.
 
-getDailyOverLimit(Monitor, Date, Limit) ->
+%% zwraca liczbę stacji na których została przekroczona norma dla danego parametru
+getDailyOverLimit(Date, Type, Limit, Monitor) ->
   %%  StationsAndMensurations = [{{Name, Coord}, NumberOfMensurations / number of days}, ...]
   StationsAndMensurations = [{X, Y} || X <- maps:keys(Monitor), %% X - station name
     Y <- maps:get(X, Monitor),
-    Date == element(1, element(1, Y)),
-    Limit < element(3, Y)],
+    Date =:= element(1, element(1, Y)),
+    Limit < element(3, Y),
+    Type =:= element(2, Y)],
+  StationsAndMensurations,
   length(StationsAndMensurations).
 
+
+
+%% zwraca średnią dzienną ilość pomiarów dla danej stacji
+getDailyAverageMensurationOfStation(Name, Monitor) ->
+  Keys = maps:keys(Monitor),
+  FiltredList = lists:filter(fun(X) -> lists:member(Name, X) end, Keys),
+  StationExist = [] =/= FiltredList,
+  case StationExist of
+    false -> io:format("Station with such name or coordinates doesn't exist~n"), {};
+    true -> [Key] = FiltredList,
+      MensurationsNumber = length(maps:get(Key, Monitor)),
+      DayNumber = length(getUniqueDays(maps:get(Key, Monitor))),
+      MensurationsNumber / DayNumber
+  end.
+
+%% zwraca liczbę stacji na których nie została przekroczona norma dla danego parametru
+getDailyUnderLimit(Date, Type, Limit, Monitor) ->
+  %%  StationsAndMensurations = [{{Name, Coord}, NumberOfMensurations / number of days}, ...]
+  StationsAndMensurations = [{X, Y} || X <- maps:keys(Monitor), %% X - station name
+    Y <- maps:get(X, Monitor),
+    Date =:= element(1, element(1, Y)),
+    Limit > element(3, Y),
+    Type =:= element(2, Y)],
+  length(StationsAndMensurations).
 
