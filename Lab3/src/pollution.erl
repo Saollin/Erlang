@@ -11,7 +11,7 @@
 
 %% API
 -export([createMonitor/0, addStation/3, addValue/5, removeValue/4, getOneValue/4, getStationMean/3, getDailyMean/3]).
--export([getHourlyMean/4, getMaximumGradientStations/1]).
+-export([getHourlyMean/4, getMaximumGradientStations/1, getDailyAverageDataCount/1]).
 %% tworzy nowy monitor
 createMonitor() ->
   #{}.
@@ -145,6 +145,18 @@ getHourlyMean(Name, Hour, Type, Monitor) ->
 checkHourOfDay(CheckHour, CheckType, Data) ->
   {{_, Hour}, Type, _} = Data,
   Hour =:= CheckHour andalso CheckType =:= Type.
+
+%% funkcja oblicza średnią ilość pomiarów dziennie
+getDailyAverageDataCount(Monitor) ->
+%%  StationsAndMensurations = [{{Name, Coord}, NumberOfMensurations}, ...]
+  StationsAndMensurations = [{X, Y / Z} || X <- maps:keys(Monitor), %% X - station name
+    Y <- [length(maps:get(X, Monitor))], % Y - Number of Mensurations
+    Z <- [length(getUniqueDays(maps:get(X, Monitor)))]], % Z - number of days
+  Mensurations = [X || {_, X} <- StationsAndMensurations],
+  mean(Mensurations).
+
+getUniqueDays(Values) ->
+  sets:to_list(sets:from_list([element(1,X) || X <- Values])).
 
 %% funkcja wylicza maksymalny gradient ze względu na odlegość dla podanego monitoru,
 %% używa do tego funkcji countMaxGradient - jako Max używa tupli {0,{-1,-1},{-1,-1}}
