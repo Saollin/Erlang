@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 04. kwi 2020 23:48
 %%%-------------------------------------------------------------------
--module(parallel_computing).
+-module(parcellockerfinder).
 -author("grzegorz").
 
 %% API
@@ -14,8 +14,8 @@
 -export([findHalfParallel/2, halfParallelFunction/3]).
 
 compare() ->
-  LockersList = parallel_computing:randomList(1000, 0, 10000),
-  PersonsList = parallel_computing:randomList(10000, 0, 10000),
+  LockersList = parcellockerfinder:randomList(1000, 0, 10000),
+  PersonsList = parcellockerfinder:randomList(10000, 0, 10000),
   T1 = element(1, timer:tc(fun findSequential/2, [LockersList, PersonsList])),
   T2 = element(1, timer:tc(fun findParallel/2, [LockersList, PersonsList])),
   T3 = element(1, timer:tc(fun findHalfParallel/2, [LockersList, PersonsList])),
@@ -38,7 +38,6 @@ findHalfParallel(LList, PList) ->
     X <- lists:seq(0, 7), Part <- [lists:sublist(PList, (X * Size) + 1, Size)]],
   R = [receive Result -> Result end],
   lists:append(R).
-
 
 parallelFunction(L, P, Pid) ->
   Result = findMyParcelLocker(L, P),
