@@ -13,7 +13,7 @@
 -export([start/0, stop/0, init/0]).
 -export([addStation/2, addValue/4, removeValue/3, getOneValue/3, getStationMean/2, getDailyMean/2]).
 -export([getHourlyMean/3, getDailyAverageDataCount/0, getMaximumGradientStations/0, getDailyOverLimit/3]).
--export([getDailyAverageMensurationOfStation/1, getDailyUnderLimit/3]).
+-export([getDailyAverageMensurationOfStation/1, getDailyUnderLimit/3, getMonitor/0]).
 
 start() ->
   register(server, spawn (?MODULE, init, [])),
@@ -32,6 +32,9 @@ loop(Monitor) ->
       ok;
     {request, Pid, start} ->
       Pid ! {reply, "Server start"},
+      loop(Monitor);
+    {request, Pid, getMonitor} ->
+      Pid ! {reply, Monitor},
       loop(Monitor);
     {request,  Pid, Arguments} ->
       countAndCatch(Monitor, Pid, Arguments)
@@ -149,6 +152,7 @@ countAndCatch(Monitor, Pid, {getDailyUnderLimit, Date, Type, Limit})->
   Pid ! {reply, Val},
   loop(Monitor).
 
+getMonitor() -> call(getMonitor).
 
 addStation(Name, Coord) -> call({addStation, Name, Coord}).
 
