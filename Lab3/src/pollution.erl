@@ -25,28 +25,29 @@ addStation(Name, Coord, Monitor) ->
   FiltredList = lists:filter(fun(X) -> checkStation(Name, Coord, X) end, Keys),
   IsStation = [] =/= FiltredList,
   case IsStation of
-    true -> io:format("Station with such name or coordinates exists~n"), Monitor;
-    false -> maps:put([Name, Coord], [], Monitor)
+    true -> throw("Station with such name or coordinates exists~n"), Monitor;
+    false -> maps:put({Name, Coord}, [], Monitor)
   end.
 
 %% sprawdza podana nazwa lub współrzędne już istnieją dla danego monitoru
-checkStation(Name, Coord, List) ->
+checkStation(Name, Coord, Tuple) ->
+  List = tuple_to_list(Tuple),
   lists:member(Name, List) orelse lists:member(Coord, List).
 
 %% dodaje wartość do danej stacji, uniemożliwia dodanie do nieistniejącej stacji (sprawdza czy taka istnieje)
 %% lub takich dwóch pomiarów o tych samych wszystkich wartościach (tej samej godzinie,
 addValue(Name, Date, Type, Value, Monitor) ->
   Keys = maps:keys(Monitor),
-  FiltredList = lists:filter(fun(X) -> lists:member(Name, X) end, Keys),
+  FiltredList = lists:filter(fun(X) -> lists:member(Name, tuple_to_list(X)) end, Keys),
   StationExist = [] =/= FiltredList,
   case StationExist of
-    false -> io:format("Station with such name or coordinates doesn't exist~n"), Monitor;
+    false -> throw("Station with such name or coordinates doesn't exist~n"), Monitor;
     true -> [Key] = FiltredList,
       DateOnlyWithHour = convertDate(Date),
       Mensurations = maps:get(Key, Monitor),
       MensurationExist = lists:any(fun(X) -> checkParameters(DateOnlyWithHour, Type, X) end, Mensurations),
       case MensurationExist of
-        true -> io:format("Such mensuration exist~n"), Monitor;
+        true -> throw("Such mensuration exist~n"), Monitor;
         false -> Monitor#{Key := [{DateOnlyWithHour, Type, Value}] ++ Mensurations}
       end
   end.
@@ -70,10 +71,10 @@ checkParameters(Date, Type, Tuple) ->
 %% w obu powyższych przypadkach zwraca niezmodyfikowany Monitor
 removeValue(Name, Date, Type, Monitor) ->
   Keys = maps:keys(Monitor),
-  FiltredList = lists:filter(fun(X) -> lists:member(Name, X) end, Keys),
+  FiltredList = lists:filter(fun(X) -> lists:member(Name, tuple_to_list(X)) end, Keys),
   StationExist = [] =/= FiltredList,
   case StationExist of
-    false -> io:format("Station with such name or coordinates doesn't exist~n"), Monitor;
+    false -> throw("Station with such name or coordinates doesn't exist~n"), Monitor;
     true -> [Key] = FiltredList,
       DateOnlyWithHour = convertDate(Date),
       Mensurations = maps:get(Key, Monitor),
@@ -84,10 +85,10 @@ removeValue(Name, Date, Type, Monitor) ->
 %% zwraca wartość pomiaru konkretnego typu, dla podanej stacji i daty (z godziną)
 getOneValue(Name, Date, Type, Monitor) ->
   Keys = maps:keys(Monitor),
-  FiltredList = lists:filter(fun(X) -> lists:member(Name, X) end, Keys),
+  FiltredList = lists:filter(fun(X) -> lists:member(Name, tuple_to_list(X)) end, Keys),
   StationExist = [] =/= FiltredList,
   case StationExist of
-    false -> io:format("Station with such name or coordinates doesn't exist~n"), {};
+    false -> throw("Station with such name or coordinates doesn't exist~n"), {};
     true -> [Key] = FiltredList,
       DateOnlyWithHour = convertDate(Date),
       Mensurations = maps:get(Key, Monitor),
@@ -99,10 +100,10 @@ getOneValue(Name, Date, Type, Monitor) ->
 %% zwraca też 0 przy braku pasujących wartości
 getStationMean(Name, Type, Monitor) ->
   Keys = maps:keys(Monitor),
-  FiltredList = lists:filter(fun(X) -> lists:member(Name, X) end, Keys),
+  FiltredList = lists:filter(fun(X) -> lists:member(Name, tuple_to_list(X)) end, Keys),
   StationExist = [] =/= FiltredList,
   case StationExist of
-    false -> io:format("Station with such name or coordinates doesn't exist~n"), 0;
+    false -> throw("Station with such name or coordinates doesn't exist~n"), 0;
     true -> [Key] = FiltredList,
       Mensurations = maps:get(Key, Monitor),
       FiltredValues = lists:filter(fun(X) -> lists:member(Type, tuple_to_list(X)) end, Mensurations),
@@ -117,7 +118,7 @@ meanOfValues(List) ->
 %% funkcja wyliczająca średnią wartość zawartą w liście
 mean(L) ->
   case length(L) of
-    0 -> io:format("There is no such mensurations! It's impossible to count mean!"), 0;
+    0 -> throw("There is no such mensurations! It's impossible to count mean!"), 0;
     _ -> lists:sum(L) / length(L)
   end.
 
@@ -135,7 +136,7 @@ getHourlyMean(Name, Hour, Type, Monitor) ->
   FiltredList = lists:filter(fun(X) -> lists:member(Name, X) end, Keys),
   StationExist = [] =/= FiltredList,
   case StationExist of
-    false -> io:format("Station with such name or coordinates doesn't exist~n"), 0;
+    false -> throw("Station with such name or coordinates doesn't exist~n"), 0;
     true -> [Key] = FiltredList,
       Mensurations = maps:get(Key, Monitor),
 %%    zostawiamy tylko dane o podanym typie i godzinie
@@ -223,7 +224,7 @@ getDailyOverLimit(Date, Type, Limit, Monitor) ->
 %% zwraca średnią dzienną ilość pomiarów dla danej stacji
 getDailyAverageMensurationOfStation(Name, Monitor) ->
   Keys = maps:keys(Monitor),
-  FiltredList = lists:filter(fun(X) -> lists:member(Name, X) end, Keys),
+  FiltredList = lists:filter(fun(X) -> lists:member(Name, tuple_to_list(X)) end, Keys),
   StationExist = [] =/= FiltredList,
   case StationExist of
     false -> io:format("Station with such name or coordinates doesn't exist~n"), {};
