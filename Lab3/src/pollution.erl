@@ -25,7 +25,7 @@ addStation(Name, Coord, Monitor) ->
   FiltredList = lists:filter(fun(X) -> checkStation(Name, Coord, X) end, Keys),
   IsStation = [] =/= FiltredList,
   case IsStation of
-    true -> throw("Station with such name or coordinates exists~n"), Monitor;
+    true -> throw("Station with such name or coordinates exists"), Monitor;
     false -> maps:put({Name, Coord}, [], Monitor)
   end.
 
@@ -41,13 +41,13 @@ addValue(Name, Date, Type, Value, Monitor) ->
   FiltredList = lists:filter(fun(X) -> lists:member(Name, tuple_to_list(X)) end, Keys),
   StationExist = [] =/= FiltredList,
   case StationExist of
-    false -> throw("Station with such name or coordinates doesn't exist~n"), Monitor;
+    false -> throw("Station with such name or coordinates doesn't exist"), Monitor;
     true -> [Key] = FiltredList,
       DateOnlyWithHour = convertDate(Date),
       Mensurations = maps:get(Key, Monitor),
       MensurationExist = lists:any(fun(X) -> checkParameters(DateOnlyWithHour, Type, X) end, Mensurations),
       case MensurationExist of
-        true -> throw("Such mensuration exist~n"), Monitor;
+        true -> throw("Such mensuration exist"), Monitor;
         false -> Monitor#{Key := [{DateOnlyWithHour, Type, Value}] ++ Mensurations}
       end
   end.
@@ -74,7 +74,7 @@ removeValue(Name, Date, Type, Monitor) ->
   FiltredList = lists:filter(fun(X) -> lists:member(Name, tuple_to_list(X)) end, Keys),
   StationExist = [] =/= FiltredList,
   case StationExist of
-    false -> throw("Station with such name or coordinates doesn't exist~n"), Monitor;
+    false -> throw("Station with such name or coordinates doesn't exist"), Monitor;
     true -> [Key] = FiltredList,
       DateOnlyWithHour = convertDate(Date),
       Mensurations = maps:get(Key, Monitor),
@@ -88,7 +88,7 @@ getOneValue(Name, Date, Type, Monitor) ->
   FiltredList = lists:filter(fun(X) -> lists:member(Name, tuple_to_list(X)) end, Keys),
   StationExist = [] =/= FiltredList,
   case StationExist of
-    false -> throw("Station with such name or coordinates doesn't exist~n"), {};
+    false -> throw("Station with such name or coordinates doesn't exist"), {};
     true -> [Key] = FiltredList,
       DateOnlyWithHour = convertDate(Date),
       Mensurations = maps:get(Key, Monitor),
@@ -103,7 +103,7 @@ getStationMean(Name, Type, Monitor) ->
   FiltredList = lists:filter(fun(X) -> lists:member(Name, tuple_to_list(X)) end, Keys),
   StationExist = [] =/= FiltredList,
   case StationExist of
-    false -> throw("Station with such name or coordinates doesn't exist~n"), 0;
+    false -> throw("Station with such name or coordinates doesn't exist"), 0;
     true -> [Key] = FiltredList,
       Mensurations = maps:get(Key, Monitor),
       FiltredValues = lists:filter(fun(X) -> lists:member(Type, tuple_to_list(X)) end, Mensurations),
@@ -136,7 +136,7 @@ getHourlyMean(Name, Hour, Type, Monitor) ->
   FiltredList = lists:filter(fun(X) -> lists:member(Name, X) end, Keys),
   StationExist = [] =/= FiltredList,
   case StationExist of
-    false -> throw("Station with such name or coordinates doesn't exist~n"), 0;
+    false -> throw("Station with such name or coordinates doesn't exist"), 0;
     true -> [Key] = FiltredList,
       Mensurations = maps:get(Key, Monitor),
 %%    zostawiamy tylko dane o podanym typie i godzinie
@@ -227,7 +227,7 @@ getDailyAverageMensurationOfStation(Name, Monitor) ->
   FiltredList = lists:filter(fun(X) -> lists:member(Name, tuple_to_list(X)) end, Keys),
   StationExist = [] =/= FiltredList,
   case StationExist of
-    false -> io:format("Station with such name or coordinates doesn't exist~n"), {};
+    false -> io:format("Station with such name or coordinates doesn't exist"), {};
     true -> [Key] = FiltredList,
       MensurationsNumber = length(maps:get(Key, Monitor)),
       DayNumber = length(getUniqueDays(maps:get(Key, Monitor))),
