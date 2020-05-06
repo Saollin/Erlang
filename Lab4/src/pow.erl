@@ -21,12 +21,14 @@ init(N)        -> {ok,N}.
 %% INTERFEJS KLIENT -> SERWER %%
 step()      -> gen_server:cast(?MODULE,step).
 read()      -> gen_server:call(?MODULE,read).
+set(Val)    -> gen_server:cast(?MODULE, {set, Val}).
 close()     -> gen_server:call(?MODULE,terminate).
 crash()     -> gen_server:cast(?MODULE,crash).
 
 %% OBSŁUGA WIADOMOŚCI %%
 handle_cast(step, N) -> {noreply, N*N};
-handle_cast(crash, N) -> no:exist(), {noreply, N}.
+handle_cast(crash, N) -> no:exist(), {noreply, N};
+handle_cast({set, Val}, _N) -> {noreply, Val}.
 
 handle_call(read,_From, N)      -> {reply, N, N};
 handle_call(terminate,_From,N) -> {stop, normal, ok, N}.
