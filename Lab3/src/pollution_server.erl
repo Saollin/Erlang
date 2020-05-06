@@ -130,15 +130,6 @@ countAndCatch(Monitor, Pid, {getMaximumGradientStations})->
       Pid ! {reply, X},
       loop(Monitor)
   end;
-countAndCatch(Monitor, Pid, {getDailyAverageMensurationOfStation, Name})->
-  try pollution:getDailyAverageMensurationOfStation(Name, Monitor) of
-    Val -> Pid ! {reply, Val},
-      loop(Monitor)
-  catch
-    throw:X ->
-      Pid ! {reply, X},
-      loop(Monitor)
-  end;
 countAndCatch(Monitor, Pid, {getDailyMean, Date, Type})->
   Val = pollution:getDailyMean(Date, Type, Monitor),
   Pid ! {reply, Val},
