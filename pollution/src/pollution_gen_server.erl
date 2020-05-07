@@ -135,5 +135,5 @@ terminate(normal, Value) ->
 terminate(Reason, Value) ->
 	ets:insert(backup, {val, Value}),
 	io:format("~nServer: exit with monitor: ~p~n", [Value]),
-	io:format("Server: exit with reason: ~p~n~n", [Reason]),
+	io:format("Server exit unnormal ~n"),
 	Reason.

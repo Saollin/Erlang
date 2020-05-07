@@ -82,3 +82,13 @@ getDailyAverageMensurationOfStation_test() ->
 getDailyUnderLimit_test() ->
   Date = element(1, calendar:local_time()),
   ?assertEqual(1, pollution_gen_server:getDailyUnderLimit(Date, "PM2,5", 90)).
+
+has_monitor_the_same_value_after_crash_as_before_test() ->
+  Before = pollution_gen_server:getMonitor(),
+  % crash
+  try pollution_gen_server:crash() of
+    _ -> ok
+  catch _ ->
+    After = pollution_gen_server:getMonitor(),
+    ?assertEqual(Before, After)
+  end.
