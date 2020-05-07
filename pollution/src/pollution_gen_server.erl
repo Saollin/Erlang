@@ -4,7 +4,7 @@
 
 -export([start/0, init/1, handle_call/3, handle_cast/2, terminate/2]).
 
--export([stop/0, addStation/2, addValue/4, removeValue/3, getOneValue/3,crash/0]).
+-export([stop/0, addStation/2, addValue/4, removeValue/3, getOneValue/3,crash/0, getMonitor/0]).
 -export([getStationMean/2, getHourlyMean/3, getDailyOverLimit/3, getMaximumGradientStations/0]).
 -export([getDailyAverageMensurationOfStation/1, getDailyMean/2, getDailyAverageDataCount/0, getDailyUnderLimit/3]).
 start() ->
@@ -19,6 +19,8 @@ init([]) ->
 	{ok, ets:lookup_element(backup, val, 2)}.
                               
 %% user interface
+getMonitor() ->
+	gen_server:call(pollution_gen_server, getMonitor).
 addStation(Name, Coord) ->
 	gen_server:call(pollution_gen_server, {addStation, Name, Coord}).
 addValue(Name, Date, Type, TypeValue) ->
@@ -34,13 +36,13 @@ getHourlyMean(Name, Hour, Type) ->
 getDailyOverLimit(Date, Type, Limit) ->
 	gen_server:call(pollution_gen_server, {getDailyOverLimit, Date, Type, Limit}).
 getMaximumGradientStations() ->
-	gen_server:call(pollution_gen_server, {getMaximumGradientStations}).
+	gen_server:call(pollution_gen_server, getMaximumGradientStations).
 getDailyAverageMensurationOfStation(Name) ->
 	gen_server:call(pollution_gen_server, {getDailyAverageMensurationOfStation, Name}).
 getDailyMean(Name, Type) ->
 	gen_server:call(pollution_gen_server, {getDailyMean, Name, Type}).
 getDailyAverageDataCount() ->
-	gen_server:call(pollution_gen_server, {getDailyAverageDataCount}).
+	gen_server:call(pollution_gen_server, getDailyAverageDataCount).
 getDailyUnderLimit(Date, Type, Limit) ->
 	gen_server:call(pollution_gen_server, {getDailyUnderLimit, Date, Type, Limit}).
 crash() ->
@@ -49,6 +51,8 @@ stop() ->
 	gen_server:cast(pollution_gen_server, stop).
 
 %% callbacks
+handle_call(getMonitor, _From, Value) ->
+		{reply, Value, Value};
 handle_call({addStation, Name, Coord}, _From, Value) ->
 	try pollution:addStation(Name, Coord, Value) of
 		NewVal -> {reply, NewVal, NewVal}
@@ -79,60 +83,44 @@ handle_call({getOneValue, Name, Date, Type}, _From, Value) ->
 	end;
 handle_call({getStationMean, Name, Type}, _From, Value) ->
 	try pollution:getStationMean(Name, Type, Value) of
-		NewVal -> {reply, NewVal, NewVal}
+		GetVal -> {reply, GetVal, Value}
 	catch
 		throw:X ->
 			{reply, X, Value}
 	end;
 handle_call({getHourlyMean, Name, Hour, Type}, _From, Value) ->
 	try pollution:getHourlyMean(Name, Hour, Type, Value) of
-		NewVal -> {reply, NewVal, NewVal}
+		GetVal -> {reply, GetVal, Value}
 	catch
 		throw:X ->
 			{reply, X, Value}
 	end;
-handle_call({getDailyOverLimit, Date, Type, Limit}, _From, Value) ->
-	try pollution:getDailyOverLimit(Date, Type, Limit, Value) of
-		NewVal -> {reply, NewVal, NewVal}
-	catch
-		throw:X ->
-			{reply, X, Value}
-	end;
-handle_call({getMaximumGradientStations}, _From, Value) ->
+handle_call(getMaximumGradientStations, _From, Value) ->
 	try pollution:getMaximumGradientStations(Value) of
-		NewVal -> {reply, NewVal, NewVal}
+		GetVal -> {reply, GetVal, Value}
 	catch
 		throw:X ->
 			{reply, X, Value}
 	end;
 handle_call({getDailyAverageMensurationOfStation, Name}, _From, Value) ->
 	try pollution:getDailyAverageMensurationOfStation(Name, Value) of
-		NewVal -> {reply, NewVal, NewVal}
+		GetVal -> {reply, GetVal, Value}
 	catch
 		throw:X ->
 			{reply, X, Value}
 	end;
-handle_call({getDailyMean, Name, Type}, _From, Value) ->
-	try pollution:getDailyMean(Name, Type, Value) of
-		NewVal -> {reply, NewVal, NewVal}
-	catch
-		throw:X ->
-			{reply, X, Value}
-	end;
-handle_call({getDailyAverageDataCount}, _From, Value) ->
-	try pollution:getDailyAverageDataCount(Value) of
-		NewVal -> {reply, NewVal, NewVal}
-	catch
-		throw:X ->
-			{reply, X, Value}
-	end;
+handle_call({getDailyOverLimit, Date, Type, Limit}, _From, Value) ->
+	GetVal = pollution:getDailyOverLimit(Date, Type, Limit, Value),
+	{reply, GetVal, Value};
+handle_call({getDailyMean, Date, Type}, _From, Value) ->
+	GetVal = pollution:getDailyMean(Date, Type, Value),
+	{reply, GetVal, Value};
+handle_call(getDailyAverageDataCount, _From, Value) ->
+	GetVal = pollution:getDailyAverageDataCount(Value),
+	{reply, GetVal, Value};
 handle_call({getDailyUnderLimit, Date, Type, Limit}, _From, Value) ->
-	try pollution:getDailyUnderLimit(Date, Type, Limit, Value) of
-		NewVal -> {reply, NewVal, NewVal}
-	catch
-		throw:X ->
-			{reply, X, Value}
-	end.
+	GetVal = pollution:getDailyUnderLimit(Date, Type, Limit, Value),
+	{reply, GetVal, Value}.
 handle_cast(crash, Value) ->
 	1 / 0,
 	{noreply, Value};
