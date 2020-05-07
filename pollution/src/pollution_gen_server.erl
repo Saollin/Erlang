@@ -4,8 +4,9 @@
 
 -export([start/0, init/1, handle_call/3, handle_cast/2, terminate/2]).
 
--export([stop/0, addStation/2, addValue/4, getOneValue/3,crash/0]).
-
+-export([stop/0, addStation/2, addValue/4, removeValue/3, getOneValue/3,crash/0]).
+-export([getStationMean/2, getHourlyMean/3, getDailyOverLimit/3, getMaximumGradientStations/0]).
+-export([getDailyAverageMensurationOfStation/1, getDailyMean/2, getDailyAverageDataCount/0, getDailyUnderLimit/3]).
 start() ->
 	gen_server:start_link(
 			{local, ?MODULE},
@@ -22,8 +23,26 @@ addStation(Name, Coord) ->
 	gen_server:call(pollution_gen_server, {addStation, Name, Coord}).
 addValue(Name, Date, Type, TypeValue) ->
 	gen_server:call(pollution_gen_server, {addValue, Name, Date, Type, TypeValue}).
+removeValue(Name, Date, Type) ->
+	gen_server:call(pollution_gen_server, {removeValue, Name, Date, Type}).
 getOneValue(Name, Date, Type) ->
 	gen_server:call(pollution_gen_server, {getOneValue, Name, Date, Type}).
+getStationMean(Name, Type) ->
+	gen_server:call(pollution_gen_server, {getStationMean, Name, Type}).
+getHourlyMean(Name, Hour, Type) ->
+	gen_server:call(pollution_gen_server, {getHourlyMean, Name, Hour, Type}).
+getDailyOverLimit(Date, Type, Limit) ->
+	gen_server:call(pollution_gen_server, {getDailyOverLimit, Date, Type, Limit}).
+getMaximumGradientStations() ->
+	gen_server:call(pollution_gen_server, {getMaximumGradientStations}).
+getDailyAverageMensurationOfStation(Name) ->
+	gen_server:call(pollution_gen_server, {getDailyAverageMensurationOfStation, Name}).
+getDailyMean(Name, Type) ->
+	gen_server:call(pollution_gen_server, {getDailyMean, Name, Type}).
+getDailyAverageDataCount() ->
+	gen_server:call(pollution_gen_server, {getDailyAverageDataCount}).
+getDailyUnderLimit(Date, Type, Limit) ->
+	gen_server:call(pollution_gen_server, {getDailyUnderLimit, Date, Type, Limit}).
 crash() ->
 	gen_server:cast(pollution_gen_server, crash).
 stop() ->
@@ -44,9 +63,72 @@ handle_call({addValue, Name, Date, Type, TypeValue}, _From, Value) ->
 		throw:X ->
 			{reply, X, Value}
 	end;
+handle_call({removeValue, Name, Date, Type}, _From, Value) ->
+	try pollution:removeValue(Name, Date, Type, Value) of
+		NewVal -> {reply, NewVal, NewVal}
+	catch
+		throw:X ->
+			{reply, X, Value}
+	end;
 handle_call({getOneValue, Name, Date, Type}, _From, Value) ->
 	try pollution:getOneValue(Name, Date, Type, Value) of
 		GetVal -> {reply, GetVal, Value}
+	catch
+		throw:X ->
+			{reply, X, Value}
+	end;
+handle_call({getStationMean, Name, Type}, _From, Value) ->
+	try pollution:getStationMean(Name, Type, Value) of
+		NewVal -> {reply, NewVal, NewVal}
+	catch
+		throw:X ->
+			{reply, X, Value}
+	end;
+handle_call({getHourlyMean, Name, Hour, Type}, _From, Value) ->
+	try pollution:getHourlyMean(Name, Hour, Type, Value) of
+		NewVal -> {reply, NewVal, NewVal}
+	catch
+		throw:X ->
+			{reply, X, Value}
+	end;
+handle_call({getDailyOverLimit, Date, Type, Limit}, _From, Value) ->
+	try pollution:getDailyOverLimit(Date, Type, Limit, Value) of
+		NewVal -> {reply, NewVal, NewVal}
+	catch
+		throw:X ->
+			{reply, X, Value}
+	end;
+handle_call({getMaximumGradientStations}, _From, Value) ->
+	try pollution:getMaximumGradientStations(Value) of
+		NewVal -> {reply, NewVal, NewVal}
+	catch
+		throw:X ->
+			{reply, X, Value}
+	end;
+handle_call({getDailyAverageMensurationOfStation, Name}, _From, Value) ->
+	try pollution:getDailyAverageMensurationOfStation(Name, Value) of
+		NewVal -> {reply, NewVal, NewVal}
+	catch
+		throw:X ->
+			{reply, X, Value}
+	end;
+handle_call({getDailyMean, Name, Type}, _From, Value) ->
+	try pollution:getDailyMean(Name, Type, Value) of
+		NewVal -> {reply, NewVal, NewVal}
+	catch
+		throw:X ->
+			{reply, X, Value}
+	end;
+handle_call({getDailyAverageDataCount}, _From, Value) ->
+	try pollution:getDailyAverageDataCount(Value) of
+		NewVal -> {reply, NewVal, NewVal}
+	catch
+		throw:X ->
+			{reply, X, Value}
+	end;
+handle_call({getDailyUnderLimit, Date, Type, Limit}, _From, Value) ->
+	try pollution:getDailyUnderLimit(Date, Type, Limit, Value) of
+		NewVal -> {reply, NewVal, NewVal}
 	catch
 		throw:X ->
 			{reply, X, Value}
