@@ -15,11 +15,11 @@
 %%-export([]).
 
 hours() ->
-  choose(0, 24).
+  choose(0, 23).
 
 prop_hour() ->
   ?FORALL(H, hours(),
-    ((H >= 0) and (H =< 24))).
+    ((H >= 0) and (H =< 23))).
 
 minutes() ->
   choose(0, 59).
@@ -60,9 +60,6 @@ type() ->
 typeVal() ->
   ?LET({Int, Float}, {int(), real()}, abs(Int + Float)).
 
-%%typeVal() ->
-%%  ?SUCHTHAT(TypeVal, val(), TypeVal > 0).
-
 name() ->
   ?LET({N, M}, {elements(["Wola", "Gilowice", "Tychy"]), vector(3, char())},
     N ++ M).
@@ -78,11 +75,11 @@ prop_stationInsert() ->
     end).
 
 prop_dateInsert() ->
-  pollution_gen_server:addStation("Wola", {30, 24}),
+  Name = "Wola",
+  pollution_gen_server:addStation(Name, {30, 24}),
   ?FORALL({Date, Type, TypeVal},
     {myDate(), type(), typeVal()},
     begin
-      Name = "Wola",
       pollution_gen_server:addValue(Name, Date, Type, TypeVal),
       (pollution_gen_server:getOneValue(Name, Date, Type)) == TypeVal
     end).
