@@ -55,7 +55,7 @@ myDate() ->
   {calendarDate(), hour()}.
 
 type() ->
-  oneof(["PM10", "PM2.5", "PM5"]).
+  elements(["PM10", "PM2.5", "PM5"]).
 
 typeVal() ->
   ?LET({Int, Float}, {int(), real()}, abs(Int + Float)).
@@ -64,7 +64,7 @@ typeVal() ->
 %%  ?SUCHTHAT(TypeVal, val(), TypeVal > 0).
 
 name() ->
-  ?LET({N, M}, {oneof(["Wola", "Gilowice", "Tychy"]), vector(3, char())},
+  ?LET({N, M}, {elements(["Wola", "Gilowice", "Tychy"]), vector(3, char())},
     N ++ M).
 
 coord() ->
