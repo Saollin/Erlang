@@ -62,7 +62,7 @@ getStationMean_test() ->
 
 % powinno zostać zwrócone 80, czyli średnia z pomiarów PM10 1 kwietnia w obu stacjach
 getDailyMean_test() ->
-  ?assertEqual(80.0, pollution_gen_server:getDailyMean({{2020, 4, 1}, 18}, "PM10")).
+  ?assertEqual(80.0, pollution_gen_server:getDailyMean({2020, 4, 1}, "PM10")).
 
 % powinna zostać zwrócona 1,1 ("Wola" ma średnio jeden pomiar dziennie, "Gilowice" mają 6 pomiarów i 5 dni pomiarów -
 % średnio 1,2 - zatem (1,2 + 1)/2 = 1,1

@@ -43,23 +43,12 @@ addValue(Name, Date, Type, Value, Monitor) ->
   case StationExist of
     false -> throw("Station with such name or coordinates doesn't exist"), Monitor;
     true -> [Key] = FiltredList,
-      DateOnlyWithHour = convertDate(Date),
       Mensurations = maps:get(Key, Monitor),
-      MensurationExist = lists:any(fun(X) -> checkParameters(DateOnlyWithHour, Type, X) end, Mensurations),
+      MensurationExist = lists:any(fun(X) -> checkParameters(Date, Type, X) end, Mensurations),
       case MensurationExist of
         true -> throw("Such mensuration exist"), Monitor;
-        false -> Monitor#{Key := [{DateOnlyWithHour, Type, Value}] ++ Mensurations}
+        false -> Monitor#{Key := [{Date, Type, Value}] ++ Mensurations}
       end
-  end.
-
-%%zwraca Date bez minut i sekund (tylko z godziną), jeśli Data jest już w takiej formie nic nie zmienia
-convertDate(Date) ->
-  {Day, Time} = Date,
-  IsTuple = is_tuple(Time),
-  case IsTuple of
-    false -> Date;
-    true -> {Hour, _, _ } = Time,
-      {Day, Hour}
   end.
 
 %% sprawdza czy istnieje już pomiar o danej godzinie i typie
@@ -76,9 +65,8 @@ removeValue(Name, Date, Type, Monitor) ->
   case StationExist of
     false -> throw("Station with such name or coordinates doesn't exist"), Monitor;
     true -> [Key] = FiltredList,
-      DateOnlyWithHour = convertDate(Date),
       Mensurations = maps:get(Key, Monitor),
-      FiltredValues = lists:filter(fun(X) -> not (checkParameters(DateOnlyWithHour, Type, X)) end, Mensurations),
+      FiltredValues = lists:filter(fun(X) -> not (checkParameters(Date, Type, X)) end, Mensurations),
       Monitor#{Key := FiltredValues}
   end.
 
@@ -90,9 +78,8 @@ getOneValue(Name, Date, Type, Monitor) ->
   case StationExist of
     false -> throw("Station with such name or coordinates doesn't exist"), {};
     true -> [Key] = FiltredList,
-      DateOnlyWithHour = convertDate(Date),
       Mensurations = maps:get(Key, Monitor),
-      [{_, _,FiltredValue}] = lists:filter(fun(X) -> checkParameters(DateOnlyWithHour, Type, X) end, Mensurations),
+      [{_, _,FiltredValue}] = lists:filter(fun(X) -> checkParameters(Date, Type, X) end, Mensurations),
       FiltredValue
   end.
 
@@ -124,11 +111,15 @@ mean(L) ->
 
 %% funkcja wyliczająca średnią wartość pomiarów danego typu dla wszystkich stacji
 getDailyMean(Date, Type, Monitor) ->
-  DateOnlyWithHour = convertDate(Date),
   Values = maps:values(Monitor),
   FlattenValues = lists:flatten(Values),
-  RightValues = lists:filter(fun(X) -> checkParameters(DateOnlyWithHour, Type, X) end, FlattenValues),
+  RightValues = lists:filter(fun(X) -> checkDayAndType(Date, Type, X) end, FlattenValues),
   meanOfValues(RightValues).
+
+%% sprawdza czy pomiar jest danego dnia i danego typu
+checkDayAndType(Date, Type, Tuple) ->
+  {{CheckingDate, _}, CheckingType, _} = Tuple,
+  CheckingDate =:= Date andalso Type =:= CheckingType.
 
 %% funkcja wylicza średnią wartość pomiaru danego typu każdego dnia o podanej godzinie na danej stacji
 getHourlyMean(Name, Hour, Type, Monitor) ->
@@ -146,7 +137,7 @@ getHourlyMean(Name, Hour, Type, Monitor) ->
 
 %% funkcja pobiera godzine i typ z tupli z danymi i zwraca true jesli obie zgadzają się z podanym parametrem
 checkHourOfDay(CheckHour, CheckType, Data) ->
-  {{_, Hour}, Type, _} = Data,
+  {{_, {Hour, _, _ }}, Type, _} = Data,
   Hour =:= CheckHour andalso CheckType =:= Type.
 
 %% funkcja oblicza średnią ilość pomiarów dziennie przypadającą na jedną stację
